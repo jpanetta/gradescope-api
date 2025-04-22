@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 from gradescopeapi.classes.courses import Course
 from gradescopeapi.classes.member import Member
+import re
 
 
 def get_courses_info(
@@ -138,8 +139,7 @@ def get_course_members(soup: BeautifulSoup, course_id: str) -> list[Member]:
     # name, email, role, sections?, submissions, edit, remove
     # if course has sections, section column is added before number of submissions column
     headers = soup.find("table", class_="js-rosterTable").find_all("th")
-    has_sections = any(h.text.startswith("Sections") for h in headers)
-    num_submissions_column = 4 if has_sections else 3
+    num_submissions_column = [h.text for h in headers].index('Submissions')
 
     member_list = []
 
@@ -172,6 +172,16 @@ def get_course_members(soup: BeautifulSoup, course_id: str) -> list[Member]:
         # from data attributes in button
         email = data_button.get("data-email")
         id = data_button.get("data-id")
+
+        gradebook_user_id = None
+        user_id_data_button = cell.find("button", class_="js-rosterName")
+        if user_id_data_button is not None:
+            gradebook_url = user_id_data_button.get('data-url')
+
+            m = re.search(f'user_id=([0-9]+)', gradebook_url)
+            if (m is None): raise Exception(f"data-url is missing user_id: {data_url}")
+            gradebook_user_id = m.group(1)
+
         role = id_to_role[data_button.get("data-role")]
         sections = data_button.get("data-sections")  # TODO: check if this is correct
 
@@ -186,6 +196,7 @@ def get_course_members(soup: BeautifulSoup, course_id: str) -> list[Member]:
             sid=sid,
             email=email,
             role=role,
+            gradebook_user_id=gradebook_user_id,
             id=id,
             num_submissions=num_submissions,
             sections=sections,

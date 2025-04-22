@@ -119,6 +119,12 @@ class Account:
         except Exception:
             return None
 
+    def get_assignment_autograder_docker_image(self, course_id: str, assignment_id: str) -> list[Assignment]:
+        ag_info_endpoint = f"{self.gradescope_base_url}/courses/{course_id}/assignments/{assignment_id}/configure_autograder"
+        config_ag_page_resp = check_page_auth(self.session, ag_info_endpoint)
+        config_ag_page_soup = BeautifulSoup(config_ag_page_resp.text, "html.parser")
+        return config_ag_page_soup.find('input', id='assignment_image_name')['value']
+
     def get_assignments(self, course_id: str) -> list[Assignment]:
         """
         Get a list of detailed assignment information for a course
@@ -130,20 +136,20 @@ class Account:
             "You are not authorized to access this page.": if logged in user is unable to access submissions
             "You must be logged in to access this page.": if no user is logged in
         """
-        course_endpoint = f"{self.gradescope_base_url}/courses/{course_id}"
+        assignments_endpoint = f"{self.gradescope_base_url}/courses/{course_id}/assignments"
         # check that course_id is valid (not empty)
         if not course_id:
             raise Exception("Invalid Course ID")
         session = self.session
         # scrape page
-        coursepage_resp = check_page_auth(session, course_endpoint)
-        coursepage_soup = BeautifulSoup(coursepage_resp.text, "html.parser")
+        assignmentspage_resp = check_page_auth(session, assignments_endpoint)
+        assignmentspage_soup = BeautifulSoup(assignmentspage_resp.text, "html.parser")
 
         # two different helper functions to parse assignment info
         # webpage html structure differs based on if user if instructor or student
-        assignment_info_list = get_assignments_instructor_view(coursepage_soup)
+        assignment_info_list = get_assignments_instructor_view(assignmentspage_soup)
         if not assignment_info_list:
-            assignment_info_list = get_assignments_student_view(coursepage_soup)
+            assignment_info_list = get_assignments_student_view(assignmentspage_soup)
 
         return assignment_info_list
 
