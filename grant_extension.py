@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from gradescopeapi.classes.connection import GSConnection
 from gradescopeapi.classes.assignments import update_assignment_date
 from gradescopeapi.classes.extensions import get_extensions, update_student_extension
