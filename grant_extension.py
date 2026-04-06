@@ -76,7 +76,7 @@ for assignment in assignments:
         connection.session,
         course_id,
         assignment.assignment_id,
-        matching[0].gradebook_user_id,
+        matching[0].user_id,
         assignment.release_date,
         new_due_date,
         late_due_date,

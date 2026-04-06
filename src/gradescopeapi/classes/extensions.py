@@ -140,7 +140,7 @@ def update_student_extension(
     session: requests.Session,
     course_id: str,
     assignment_id: str,
-    gradebook_user_id: str,
+    user_id: str,
     release_date: datetime.datetime | None = None,
     due_date: datetime.datetime | None = None,
     late_due_date: datetime.datetime | None = None,
@@ -165,7 +165,7 @@ def update_student_extension(
         session (requests.Session): The session to use for the request
         course_id (str): The course id
         assignment_id (str): The assignment id
-        gradebook_user_id (str): The *gradebook* user id
+        user_id (str): The *gradebook* user id
         release_date (datetime.datetime | None): The release date. If None, it will not be updated
         due_date (datetime.datetime | None): The due date. If None, it will not be updated
         late_due_date (datetime.datetime | None): The late due date. If None, it will not be updated

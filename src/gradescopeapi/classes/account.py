@@ -137,9 +137,9 @@ class Account:
 
         # two different helper functions to parse assignment info
         # webpage html structure differs based on if user if instructor or student
-        assignment_info_list = get_assignments_instructor_view(assignmentspage_soup)
+        assignment_info_list = get_assignments_instructor_view(coursepage_soup)
         if not assignment_info_list:
-            assignment_info_list = get_assignments_student_view(assignmentspage_soup)
+            assignment_info_list = get_assignments_student_view(coursepage_soup)
 
         return assignment_info_list
 
