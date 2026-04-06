@@ -41,6 +41,7 @@ dependencies = [
     "requests-toolbelt>=1.0.0",
     "requests>=2.31.0",
     "tzdata>=2024.2",
+    "pip>=25.0.1",
 ]
 description = "Library for programmatically interacting with Gradescope."
 maintainers = [
