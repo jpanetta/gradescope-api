@@ -15,6 +15,8 @@ from gradescopeapi.classes._helpers._course_helpers import (
 )
 from gradescopeapi.classes.assignments import Assignment
 from gradescopeapi.classes.member import Member
+from gradescopeapi.classes._helpers._assignment_helpers import NotAuthorized
+from gradescopeapi.classes.courses import Course
 
 
 class Account:
@@ -26,7 +28,7 @@ class Account:
         self.session = session
         self.gradescope_base_url = gradescope_base_url
 
-    def get_courses(self) -> dict:
+    def get_courses(self) -> dict[str, dict[str, Course]]:
         """
         Get all courses for the user, including both instructor and student courses
 
@@ -57,34 +59,13 @@ class Account:
 
         if response.status_code != 200:
             raise RuntimeError(
-                "Failed to access account page on Gradescope. Status code: {response.status_code}"
+                f"Failed to access account page on Gradescope. Status code: {response.status_code}"
             )
 
         soup = BeautifulSoup(response.text, "html.parser")
 
         # see if user is solely a student or instructor
-        user_courses, is_instructor = get_courses_info(soup, "Your Courses")
-
-        # if the user is indeed solely a student or instructor
-        # return the appropriate set of courses
-        if user_courses:
-            if is_instructor:
-                return {"instructor": user_courses, "student": {}}
-            else:
-                return {"instructor": {}, "student": user_courses}
-
-        # if user is both a student and instructor, get both sets of courses
-        courses = {"instructor": {}, "student": {}}
-
-        # get instructor courses
-        instructor_courses, _ = get_courses_info(soup, "Instructor Courses")
-        courses["instructor"] = instructor_courses
-
-        # get student courses
-        student_courses, _ = get_courses_info(soup, "Student Courses")
-        courses["student"] = student_courses
-
-        return courses
+        return get_courses_info(soup)
 
     def get_course_users(self, course_id: str) -> list[Member]:
         """
@@ -136,14 +117,23 @@ class Account:
             "You are not authorized to access this page.": if logged in user is unable to access submissions
             "You must be logged in to access this page.": if no user is logged in
         """
-        assignments_endpoint = f"{self.gradescope_base_url}/courses/{course_id}/assignments"
         # check that course_id is valid (not empty)
         if not course_id:
             raise Exception("Invalid Course ID")
         session = self.session
+
         # scrape page
-        assignmentspage_resp = check_page_auth(session, assignments_endpoint)
-        assignmentspage_soup = BeautifulSoup(assignmentspage_resp.text, "html.parser")
+        try:
+            # this endpoint is only available if the user is a staff of the course
+            course_endpoint = (
+                f"{self.gradescope_base_url}/courses/{course_id}/assignments"
+            )
+            coursepage_resp = check_page_auth(session, course_endpoint)
+        except NotAuthorized:
+            # fall back to default course page if the user is a student
+            course_endpoint = f"{self.gradescope_base_url}/courses/{course_id}"
+            coursepage_resp = check_page_auth(session, course_endpoint)
+        coursepage_soup = BeautifulSoup(coursepage_resp.text, "html.parser")
 
         # two different helper functions to parse assignment info
         # webpage html structure differs based on if user if instructor or student

@@ -7,6 +7,10 @@ from gradescopeapi import DEFAULT_GRADESCOPE_BASE_URL
 from gradescopeapi.classes.assignments import Assignment
 
 
+class NotAuthorized(Exception):
+    pass
+
+
 def check_page_auth(session, endpoint):
     """
     raises Exception if user not logged in or doesn't have appropriate authorities
@@ -19,7 +23,7 @@ def check_page_auth(session, endpoint):
         # TODO: how should we handle errors so that our API can read them?
         error_msg = [*json.loads(submissions_resp.text).values()][0]
         if error_msg == "You are not authorized to access this page.":
-            raise Exception("You are not authorized to access this page.")
+            raise NotAuthorized("You are not authorized to access this page.")
         elif error_msg == "You must be logged in to access this page.":
             raise Exception("You must be logged in to access this page.")
     elif submissions_resp.status_code == requests.codes.not_found:
@@ -83,13 +87,13 @@ def get_assignments_instructor_view(coursepage_soup):
 def get_assignments_student_view(coursepage_soup):
     # parse into list of lists: Assignments[row_elements[]]
     assignment_table = []
-    for assignment_row in coursepage_soup.findAll("tr", role="row")[
+    for assignment_row in coursepage_soup.find_all("tr", role="row")[
         1:-1
     ]:  # Skip header row and tail row (dropzonePreview--fileNameHeader)
         row = []
-        for th in assignment_row.findAll("th"):
+        for th in assignment_row.find_all("th"):
             row.append(th)
-        for td in assignment_row.findAll("td"):
+        for td in assignment_row.find_all("td"):
             row.append(td)
         assignment_table.append(row)
     assignment_info_list = []
